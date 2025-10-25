@@ -1,5 +1,10 @@
 import { Stack } from "expo-router";
+import MarkersProvider from "./context/context";
 
 export default function RootLayout() {
-  return <Stack />;
+  return (
+    <MarkersProvider>
+      <Stack />
+    </MarkersProvider>
+  );
 }

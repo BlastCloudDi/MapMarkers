@@ -1,4 +1,3 @@
-import { useMarkers } from '@/app/context/context';
 import ImageList from '@/components/ImageList';
 import { MarkerImage } from '@/types';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -7,23 +6,24 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 type Props = {
   images: MarkerImage[];
   markerId: number;
+  marker: any;
   addImageAsync: (e: any) => void;
+  handleDeleteMarker: (e: any) => void;
   handleDeleteButton: (e: any) => void;
 };
 
-export default function MarkerDetails({ images, markerId, addImageAsync, handleDeleteButton }: Props) {
-  const { markers} = useMarkers()
-  const thisMarker = markers.find(m => m.id === markerId);
-
+export default function MarkerDetails({ images, markerId, marker, addImageAsync, handleDeleteMarker, handleDeleteButton }: Props) {
   return (
     <View style={styles.container}>
       
       <View style={styles.markerHeader}>
-        <Text style={styles.headerText}>Marker №{ markerId }</Text>
-        
+        <Text style={styles.headerText}>№{ markerId }</Text>
         <TouchableOpacity style={styles.addButton} onPress={addImageAsync}>
           <Text style={styles.headerText}>Добавить фото</Text>
           <Ionicons name={'camera-outline'} size={25} color={'#fff'} />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.addButton} onPress={() => handleDeleteMarker(markerId)}>
+          <Ionicons name={'close'} size={25} color={'#fff'} />
         </TouchableOpacity>
       </View>
 
@@ -37,7 +37,7 @@ export default function MarkerDetails({ images, markerId, addImageAsync, handleD
 
       <View style={styles.markerFooter}>
         <Text style={styles.noPhotoText}>Местоположение маркера</Text>
-        <Text style={styles.noPhotoText}>{ thisMarker?.latitude }, {thisMarker?.longitude}</Text>
+        <Text style={styles.noPhotoText}>{ marker?.latitude ?? 'NaN' }, { marker?.longitude ?? 'NaN' }</Text>
       </View>
     </View>
   );

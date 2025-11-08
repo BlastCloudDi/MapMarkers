@@ -1,16 +1,43 @@
 import MarkerDetails from '@/components/MarkerDetails';
-import { MarkerImage } from '@/types';
+import { deleteMarker } from '@/database/operations';
+import { MarkerImage, MarkerObject } from '@/types';
 import * as ImagePicker from 'expo-image-picker';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Alert } from 'react-native';
-import { useMarkers } from '../context/context';
+import { useDatabase } from '../context/DatabaseContext';
 
 export default function MarkerDetailScreen() {
-  const { id } = useLocalSearchParams()
-  const markerId = Number(id)
-  const { markers, setMarkers } = useMarkers()
-  const thisMarker = markers.find(m => m.id === markerId);
-  const images = thisMarker ? thisMarker.images : [];
+  const { id } = useLocalSearchParams();
+  const markerId = Number(id);
+  const router = useRouter();
+
+  const { getMarkers, addImage, deleteImage, getMarkerImages } = useDatabase();
+  
+  const [images, setImages] = useState<MarkerImage[]>([]);
+  const [marker, setMarker] = useState<MarkerObject>();
+
+  // Загрузить данные маркера
+  useEffect(() => {
+    loadMarkerData();
+  }, [markerId]);
+
+  const loadMarkerData = async () => {
+    try {
+      // Загрузить маркеры из базы и получить нужный по ID
+      const markers = await getMarkers();
+      const thisMarker = markers.find(m => m.id === markerId);
+      setMarker(thisMarker);
+
+      if (thisMarker) {
+        const markerImages = await getMarkerImages(thisMarker.id)
+        setImages(markerImages);
+      }
+    } catch (error) {
+      console.error('Error loading marker data:', error);
+      Alert.alert('Ошибка', 'Не удалось загрузить данные маркера');
+    }
+  };
 
   const checkMediaLibraryPermissions = async () => {
     const { status } = await ImagePicker.getMediaLibraryPermissionsAsync();
@@ -40,18 +67,8 @@ export default function MarkerDetailScreen() {
       });
 
       if (!result.canceled) {
-        const newImage: MarkerImage = {
-          id: images.length + 1,
-          markerId: markerId,
-          uri: result.assets[0].uri,
-        };
-        setMarkers(prev => 
-          prev.map(marker =>
-            marker.id === markerId
-              ? { ...marker, images: [...marker.images, newImage] }
-              : marker
-          )
-        );
+        await addImage(markerId, result.assets[0].uri);
+        await loadMarkerData();
       }
 
     } catch {
@@ -65,29 +82,48 @@ export default function MarkerDetailScreen() {
       'Вы действительно хотите удалить изображение?',
       [
         { text: 'Отмена', style: 'cancel' },
-        { text: 'Удалить', style: 'destructive', onPress: () => {deleteImage(markerId, id)} },
+        { text: 'Удалить', style: 'destructive', onPress: () => {deleteMarkerImage(id)} },
       ],
     );
   };
 
-  const deleteImage = (markerId: number, imageId: number) => {
+  const deleteMarkerImage = async (imageId: number) => {
     try {
-      setMarkers(prevMarkers =>
-        prevMarkers.map(marker => {
-          if (marker.id === markerId) {
-            const updatedImages = marker.images.filter(img => img.id !== imageId);
-            return { ...marker, images: updatedImages };
-          }
-          return marker;
-        })
-      );
-
+      await deleteImage(imageId);
+      setImages(prev => prev.filter(img => img.id !== imageId));
     } catch {
       Alert.alert('Ошибка', 'Не удалось удалить изображение')
     }
   };
 
+  const handleDeleteMarker = (id: number) => {
+    Alert.alert(
+      'Подтверждение',
+      'Вы действительно хотите удалить маркер со всеми изображениями?',
+      [
+        { text: 'Отмена', style: 'cancel' },
+        { text: 'Удалить', style: 'destructive', onPress: () => {deleteMarkerAsync(id)} },
+      ],
+    );
+  };
+
+  const deleteMarkerAsync = async (markerId: number) => {
+    try {
+      await deleteMarker(markerId);
+      router.push({ pathname: '/'});
+    } catch {
+      Alert.alert('Ошибка', 'Не удалось удалить маркер')
+    }
+  };
+
   return (
-    <MarkerDetails images={images} markerId={markerId} addImageAsync={() => addImageAsync()} handleDeleteButton={handleDeleteButton}/>
+    <MarkerDetails 
+      images={images}
+      markerId={markerId}
+      marker={marker}
+      addImageAsync={() => addImageAsync()}
+      handleDeleteMarker={handleDeleteMarker}
+      handleDeleteButton={handleDeleteButton}
+    />
   );
 }

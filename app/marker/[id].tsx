@@ -1,11 +1,11 @@
 import MarkerDetails from '@/components/MarkerDetails';
+import { useDatabase } from '@/context/DatabaseContext';
 import { deleteMarker } from '@/database/operations';
 import { MarkerImage, MarkerObject } from '@/types';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert } from 'react-native';
-import { useDatabase } from '../context/DatabaseContext';
 
 export default function MarkerDetailScreen() {
   const { id } = useLocalSearchParams();

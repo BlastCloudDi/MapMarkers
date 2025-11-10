@@ -1,8 +1,8 @@
 import Map from '@/components/Map';
+import { useDatabase } from '@/context/DatabaseContext';
 import type { MarkerObject } from '@/types';
 import React, { useEffect, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
-import { useDatabase } from './context/DatabaseContext';
 
 export default function App() {
   const { addMarker, getMarkers, isLoading } = useDatabase();

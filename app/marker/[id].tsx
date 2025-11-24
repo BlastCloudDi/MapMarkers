@@ -1,6 +1,6 @@
 import MarkerDetails from '@/components/MarkerDetails';
 import { useDatabase } from '@/context/DatabaseContext';
-import { deleteMarker } from '@/database/operations';
+//import { deleteMarker, getMarkerByIdWithImages } from '@/database/operations';
 import { MarkerImage, MarkerObject } from '@/types';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -12,7 +12,7 @@ export default function MarkerDetailScreen() {
   const markerId = Number(id);
   const router = useRouter();
 
-  const { getMarkers, addImage, deleteImage, getMarkerImages } = useDatabase();
+  const { addImage, deleteImage, deleteMarker, getMarkerByIdWithImages } = useDatabase();
   
   const [images, setImages] = useState<MarkerImage[]>([]);
   const [marker, setMarker] = useState<MarkerObject>();
@@ -24,14 +24,15 @@ export default function MarkerDetailScreen() {
 
   const loadMarkerData = async () => {
     try {
-      // Загрузить маркеры из базы и получить нужный по ID
-      const markers = await getMarkers();
-      const thisMarker = markers.find(m => m.id === markerId);
-      setMarker(thisMarker);
-
-      if (thisMarker) {
-        const markerImages = await getMarkerImages(thisMarker.id)
-        setImages(markerImages);
+      const markerData = await getMarkerByIdWithImages(markerId);
+      
+      if (markerData) {
+        setMarker(markerData);
+        setImages(markerData.images);
+      } else {
+        Alert.alert('Ошибка', 'Маркер не найден');
+        router.push({ pathname: '/'});
+        return;
       }
     } catch (error) {
       console.error('Error loading marker data:', error);

@@ -1,6 +1,6 @@
-import { addImage, addMarker, deleteImage, deleteMarker, getMarkerImages, getMarkers } from '@/database/operations';
+import { addImage, addMarker, deleteImage, deleteMarker, getMarkerByIdWithImages, getMarkers } from '@/database/operations';
 import { initDatabase } from '@/database/schema';
-import { DatabaseContextType, MarkerImage, MarkerObject } from '@/types';
+import { DatabaseContextType, MarkerObject } from '@/types';
 import { SQLiteDatabase } from 'expo-sqlite';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
@@ -70,23 +70,7 @@ export const DatabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   const getMarkersHandler = async (): Promise<MarkerObject[]> => {
     if (!db) throw new Error('Database not initialized');
     try {
-      const markers = await getMarkers();
-      
-      const markersWithImages = await Promise.all(
-        markers.map(async (marker) => {
-          const images = await getMarkerImages(marker.id);
-          return {
-            ...marker,
-            images: images.map(img => ({
-              id: img.id,
-              markerId: img.markerId,
-              uri: img.uri
-            }))
-          };
-        })
-      );
-      
-      return markersWithImages;
+      return await getMarkers();
     } catch (err) {
       console.error('Error in getMarkers:', err);
       throw err;
@@ -113,10 +97,10 @@ export const DatabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   };
 
-  const getMarkerImagesHandler = async (markerId: number): Promise<MarkerImage[]> => {
+  const getMarkerByIdWithImagesHandler = async (markerId: number): Promise<MarkerObject | null> => {
     if (!db) throw new Error('Database not initialized');
     try {
-      return await getMarkerImages(markerId);
+      return await getMarkerByIdWithImages(markerId);
     } catch (err) {
       console.error('Error in getMarkerImages:', err);
       throw err;
@@ -132,7 +116,7 @@ export const DatabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     getMarkers: getMarkersHandler,
     addImage: addImageHandler,
     deleteImage: deleteImageHandler,
-    getMarkerImages: getMarkerImagesHandler
+    getMarkerByIdWithImages: getMarkerByIdWithImagesHandler
   };
 
   return (

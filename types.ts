@@ -23,5 +23,5 @@ export interface DatabaseContextType {
   getMarkers: () => Promise<MarkerObject[]>;
   addImage: (markerId: number, uri: string) => Promise<void>;
   deleteImage: (id: number) => Promise<void>;
-  getMarkerImages: (markerId: number) => Promise<MarkerImage[]>;
+  getMarkerByIdWithImages: (markerId: number) => Promise<MarkerObject | null>;
 }
